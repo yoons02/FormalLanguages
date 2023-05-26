@@ -16,9 +16,11 @@ public class Scanner {
     
 
     public Scanner (String fileName) { // source filename
+        String path = "MiniC Examples/";
+
     	System.out.println("Begin scanning... programs/" + fileName + "\n");
         try {
-            input = new BufferedReader (new FileReader(fileName));
+            input = new BufferedReader (new FileReader(path + fileName));
         }
         catch (FileNotFoundException e) {
             System.out.println("File not found: " + fileName);
@@ -218,12 +220,14 @@ public class Scanner {
         System.exit(1);
     }
 
-    static public void main ( String[] argv ) {
-        Scanner lexer = new Scanner(argv[0]);
+    public static void main(String[] args) {
+        Scanner lexer = new Scanner("bubble.mc");
         Token tok = lexer.next( );
         while (tok != Token.eofTok) {
             System.out.println(tok.toString());
             tok = lexer.next( );
         } 
     } // main
+
+
 }
