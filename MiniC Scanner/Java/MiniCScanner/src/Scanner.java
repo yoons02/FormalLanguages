@@ -16,11 +16,11 @@ public class Scanner {
     
 
     public Scanner (String fileName) { // source filename
-        String path = "MiniC Examples/";
+        String path = "MiniC Examples/"; // setting file path
 
     	System.out.println("Begin scanning... programs/" + fileName + "\n");
         try {
-            input = new BufferedReader (new FileReader(path + fileName));
+            input = new BufferedReader (new FileReader(path + fileName)); // accept file path
         }
         catch (FileNotFoundException e) {
             System.out.println("File not found: " + fileName);
@@ -58,7 +58,8 @@ public class Scanner {
                 String spelling = concat(letters + digits + '_');
                 return Token.keyword(spelling);
             } else if (isDigit(ch)) { // int literal
-                String number = concat(digits);
+                String number = concat(digits + '.');
+                if(number.contains(".") ) return Token.mkDoubleLiteral(number); // 숫자 문자열에 .이 있으면 소수점으로 인식
                 return Token.mkIntLiteral(number);
             } else switch (ch) {
             case ' ': case '\t': case '\r': case eolnCh:
@@ -76,21 +77,47 @@ public class Scanner {
                 if (ch != '*' && ch != '/') return Token.divideTok;
                 
                 // multi line comment
-                if (ch == '*') { 
-    				do {
-    					while (ch != '*') ch = nextChar();
-    					ch = nextChar();
-    				} while (ch != '/');
-    				ch = nextChar();
+                if (ch == '*') {
+                    char ch1;
+                    if ((ch1 = nextChar()) == '*'){ // documented comment
+                        String comment = "";
+                        do {
+                            while (ch1 != '*') {
+                                comment = comment + ch1;
+                                ch1 = nextChar();
+                            }
+                            ch1 = nextChar();
+                        } while (ch1 != '/');
+                        System.out.printf("Documented Comments -----> " + comment);
+                        ch = nextChar();
+                    }
+                    else // multi line comment
+                    {
+                        do {
+                            while (ch != '*') ch = nextChar();
+                            ch = nextChar();
+                        } while (ch != '/');
+                        ch = nextChar();
+                    }
+                }else if (ch == '/')  {
+                    char ch1;
+                    ch = nextChar();
+                    if(ch == '/'){ // single line documented comment
+                        String comment = "";
+                        do {
+                            ch1 = nextChar();
+                            comment = comment + ch1;
+                        } while (ch1 != eolnCh);
+                        System.out.printf("Documented Comments -----> " + comment);
+                    }
+                    else{
+                        while (ch != eolnCh) {  // single line comment
+                            ch = nextChar();
+                        }
+                    }
+                    ch = nextChar();
                 }
-                // single line comment
-                else if (ch == '/')  {
-	                do {
-	                    ch = nextChar();
-	                } while (ch != eolnCh);
-	                ch = nextChar();
-                }
-                
+
                 break;
             /*
             case '\'':  // char literal
@@ -98,10 +125,10 @@ public class Scanner {
                 nextChar(); // get '
                 ch = nextChar();
                 return Token.mkCharLiteral("" + ch1);
-            */    
+            */
             case eofCh: return Token.eofTok;
-            
-            case '+': 
+
+            case '+':
             	ch = nextChar();
 	            if (ch == '=')  { // addAssign
 	            	ch = nextChar();
@@ -113,7 +140,7 @@ public class Scanner {
 	            }
                 return Token.plusTok;
 
-            case '-': 
+            case '-':
             	ch = nextChar();
                 if (ch == '=')  { // subAssign
                 	ch = nextChar();
@@ -125,7 +152,7 @@ public class Scanner {
 	            }
                 return Token.minusTok;
 
-            case '*': 
+            case '*':
             	ch = nextChar();
                 if (ch == '=')  { // multAssign
                 	ch = nextChar();
@@ -133,7 +160,7 @@ public class Scanner {
                 }
                 return Token.multiplyTok;
 
-            case '%': 
+            case '%':
             	ch = nextChar();
                 if (ch == '=')  { // remAssign
                 	ch = nextChar();
@@ -152,6 +179,17 @@ public class Scanner {
 
             case '}': ch = nextChar();
             return Token.rightBraceTok;
+
+            // BracketTok 빠져있음
+            case '[': ch = nextChar();
+            return Token.leftBracketTok;
+
+            case ']': ch = nextChar();
+            return Token.rightBracketTok;
+
+            // 추가 연산자
+            case ':': ch = nextChar();
+            return Token.bitFieldAssignTok;
 
             case ';': ch = nextChar();
             return Token.semicolonTok;
@@ -175,6 +213,21 @@ public class Scanner {
             case '!':
                 return chkOpt('=', Token.notTok,
                                    Token.noteqTok);
+            case '\'' :
+                char ch1;
+                ch1 = nextChar();
+                nextChar();
+                ch = nextChar();
+                return Token.mkCharLiteral("'" + ch1 + "'");
+            case '"' :
+                String str = "";
+                ch = nextChar();
+                while(ch != '"') {
+                str = str + ch;
+                ch = nextChar();
+                }
+                ch = nextChar();
+                return Token.mkStringLiteral('\"' + str + '\"');
 
             default:  error("Illegal character " + ch); 
             } // switch
